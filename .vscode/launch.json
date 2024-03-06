@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Users/christianrodriguez/LAB3ORG/Lab3Org",
+      "program": "/Users/christianrodriguez/LAB3ORG/Lab3Org/build/Debug/outDebug"
+    }
+  ]
+}
