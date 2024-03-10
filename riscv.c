@@ -37,10 +37,75 @@ void init_memory_elements(void) {
   r[2] = (uintptr_t)&mem[MEM_SIZE];
 }
 
+
+// ADD X# WHEN EVER NEEDED SP 
+int get_r_index(const char *reg_name) {
+    if (str_cmp(reg_name, "X0") == 0) return 0;
+    else if (str_cmp(reg_name, "X1") == 0) return 1;
+    else if (str_cmp(reg_name, "X7") == 0) return 7;
+    else if (str_cmp(reg_name, "RA") == 0) return 31; 
+    else if (str_cmp(reg_name, "SP") == 0) return 2;
+    else {
+        // IF NOT A REG THEN ITS A IMM
+        int imm = atoi(reg_name);
+        if(imm == 0) {
+            return -1;
+        }  else {
+            return imm;
+        }
+    }
+}
 // WE CAN PUT OUR INSTRUCTIONS METHODS HERE
 /* Methods for Instructions*/
 
-  /*1) Loads CHRIS*/
+/*1) Loads CHRIS*/
+// LB X7,1000(X5)
+int LB (char *instr) {
+    int rd, rs1, imm;
+
+    if (sscanf(instr, "LB X%d,%d(X%d)", &rd, &imm, &rs1) != 3) {
+        return 0;
+    };
+    
+    int address = r[rs1] + imm;
+
+    if (address < 0 || address >= MEM_SIZE) {
+        return 0;
+    }
+    
+    unsigned char byte = mem[address]; // M[RS1+IMM][0:7]
+    r[rd] = byte; // RS <- byte
+    return 1;
+}
+// LW RD,RS1,IMM  LW RA,28(SP)  RS <- M[RS1+IMM][0:31]
+int LW (char *instr) {
+    int rd, rs1, imm;
+    char *token;
+    token = tokenize(instr," ,()");
+
+    token = tokenize(NULL," ,()");
+    rd = get_r_index(token);
+
+    token = tokenize(NULL," ,()");
+    imm = get_r_index(token);
+
+    if (imm == -1) {
+        return 0;
+    };
+
+    token = tokenize(NULL," ,()");
+    rs1 = get_r_index(token);
+
+    int address = r[rs1] + imm;
+
+    if (address < 0 || address >= MEM_SIZE) {
+        return 0;
+    }
+
+    char byte = mem[address];
+    r[rd] = byte;
+    return 1;
+}
 
   /*2)	Stores MARY */
 
@@ -62,11 +127,12 @@ void init_memory_elements(void) {
  */ 
 int interpret(char *instr) {
   char *instruction = instr;
+  int pass = 0; // TO CHECK IN INSTRUCTION WORKED AT THE END
 
   if (str_cmp(instruction, "LB") == 0) {
-      // Process LB instruction 
+      pass = LB(instr);
   } else if (str_cmp(instruction, "LW") == 0) {
-      // Process LW instruction 
+      pass = LW(instr);
   } else if (str_cmp(instruction, "SB") == 0) {
       // Process SB instruction 
   } else if (str_cmp(instruction, "SW") == 0) {
@@ -106,7 +172,11 @@ int interpret(char *instr) {
       return 0;
   }
 
-  return 1;
+  if (pass == 1) {
+    return 1;
+  };
+
+  return 0;
 }
 
 int main(int argc, char **argv) {
