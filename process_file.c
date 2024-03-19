@@ -103,6 +103,7 @@ int process_file(const char *file) {
   // Files
   FILE *read_f;
   FILE *write_f;
+  size_t n_lines;
 
   // Buffer variables
   char *buffer;
@@ -134,6 +135,10 @@ int process_file(const char *file) {
     return 1;
   }
 
+  // Count number of lines to add one more at the end that overwrite the PC to
+  // -1
+  n_lines = (size_t)0;
+
   while ((n_chars = getline(&buffer, &BUF_SIZE, read_f)) > ((ssize_t)0)) {
     // n_chars - 1 because \n would be replace for \0
     --n_chars;
@@ -155,7 +160,15 @@ int process_file(const char *file) {
 
     // Complete the remaining LINE_SIZE-n_chars characters with ' '
     fprintf(write_f, "%*s\n", (int)(LINE_SIZE - (size_t)n_chars), "");
+
+    // Update number of lines read in the file
+    n_lines++;
   }
+
+  // Write a line at the end of file that overwrite PC to -1
+  n_lines++;
+  n_chars = fprintf(write_f, "J -%zu", 1 + n_lines * 4);
+  fprintf(write_f, "%*s\n", (int)(LINE_SIZE - (size_t)n_chars), "");
 
   free(buffer);
   fclose(read_f);

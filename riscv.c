@@ -21,6 +21,16 @@ static void error_no_memory(void) {
   fprintf(stderr, "No more memory available. Error: %s\n", strerror(errno));
 }
 
+static int print_registers (char *fd_name) {
+    FILE *fptr;
+    if ((fptr = fopen(fd_name, "w")) == NULL) return 1;
+    // Print all registers
+    fprintf(fptr, "Registers:");
+    for (size_t i = 0; i < N_REGISTERS; i++)
+        fprintf (fptr, "XE%zu] = %uln",i, r[i]);
+    return 0;
+}
+
 // JUST BACKGROUND STUFF BUT NEED TO UNDERSTAND
 void init_memory_elements(void) {
   // Initialize registers
@@ -41,7 +51,7 @@ int is_digit(char character) {
     return character >= '0' && character <= '9';
 }
 
-// COVERS ACTUAL REGISTER NAMES
+// COVERS ACTUAL REGISTER NAMES 
 int get_r_index_extended(const char *reg_name) {
     int result = 0;
     int i = 0;
@@ -117,15 +127,29 @@ int get_r_index(const char *reg_name) {
     return -1;
 } 
 
-
 /*1) Loads CHRIS*/
 // LB X7,1000(X5)
 int LB (char *instr) {
     int rd, rs1, imm;
+    char *token = tokenize(instr," ,");
+    token = tokenize(NULL," ,");
 
-    if (sscanf(instr, "LB X%d,%d(X%d)", &rd, &imm, &rs1) != 3) {
+    token = tokenize(NULL," ,()");
+    rd = get_r_index(token);
+
+    token = tokenize(NULL," ,()");
+    imm = get_r_index(token);
+
+    token = tokenize(NULL," ,()");
+    rs1 = get_r_index(token);
+    
+    if (rd == -1) {
         return 0;
-    };
+    }
+
+    if (rs1 == -1 || imm == -1) {
+        return 0;
+    }
     
     int address = r[rs1] + imm;
 
@@ -140,8 +164,8 @@ int LB (char *instr) {
 // LW RD,RS1,IMM  LW RA,28(SP)  RS <- M[RS1+IMM][0:31]
 int LW (char *instr) {
     int rd, rs1, imm;
-    char *token;
-    token = tokenize(instr," ,()");
+    char *token = tokenize(instr, " ,()");
+    token = tokenize(NULL," ,()"); // Ignores the LW
 
     token = tokenize(NULL," ,()");
     rd = get_r_index(token);
@@ -149,12 +173,16 @@ int LW (char *instr) {
     token = tokenize(NULL," ,()");
     imm = get_r_index(token);
 
-    if (imm == -1) {
-        return 0;
-    };
-
     token = tokenize(NULL," ,()");
     rs1 = get_r_index(token);
+
+    if (rd == -1) {
+        return 0;
+    }
+
+    if (rs1 == -1 || imm == -1) {
+        return 0;
+    }
 
     int address = r[rs1] + imm;
 
@@ -171,9 +199,10 @@ int LW (char *instr) {
   /*3)	Arithmetic SHARED */
 int ADD (char *instr) {
     int rd, rs1, rs2;
-    char *token;
-
+    char *token = tokenize(instr, " ,()");
     token = tokenize(instr," ,");
+
+    token = tokenize(NULL, " ,");
     rd = get_r_index(token);
 
     token = tokenize(NULL, " ,");
@@ -197,9 +226,10 @@ int ADD (char *instr) {
 
 int ADDI (char *instr) {
     int rd, rs1, imm;
-    char *token;
+    char *token = tokenize(instr," ,");
+    token = tokenize(NULL," ,()");
 
-    token = tokenize(instr," ,");
+    token = tokenize(NULL," ,");
     rd = get_r_index(token);
 
     token = tokenize(NULL, " ,");
@@ -227,9 +257,10 @@ int ADDI (char *instr) {
   // MV RD,RS   MV A2,X0   ADDI RD,RS,IMM
 int MV (char *instr) {
     int rd, rs;
-    char *token;
+    char *token = tokenize(instr," ,");
+    token = tokenize(NULL," ,");
 
-    token = tokenize(instr," ,");
+    token = tokenize(NULL," ,");
     rd = get_r_index(token);
 
     token = tokenize(NULL," ,");
@@ -247,7 +278,8 @@ int MV (char *instr) {
 // LI RD,IMM   LI A1,6   ADDI RD,X0,IMM
 int LI (char *instr) {
     int rd, imm;
-    char *token;
+    char *token = tokenize(instr," ,");
+    token = tokenize(NULL," ,");
 
     token = tokenize(instr," ,");
     rd = get_r_index(token);
@@ -266,7 +298,8 @@ int LI (char *instr) {
 
 int NED (char *instr) {
     int rd, rs;
-    char *token;
+    char *token = tokenize(instr," ,");
+    token = tokenize(NULL," ,");
 
     token = tokenize(instr," ,");
     rd = get_r_index(token);
@@ -286,7 +319,8 @@ int NED (char *instr) {
 // NOT T0,T1
 int NOT(char *instr) { 
     int rd, rs;
-    char *token;
+    char *token = tokenize(instr," ,");
+    token = tokenize(NULL," ,");
 
     // Tokenize to extract destination register (RD)
     token = tokenize(instr, " ,");
@@ -307,7 +341,8 @@ int NOT(char *instr) {
   /*6)	Jump offset: CHRIS*/
 int JAL (char *instr) {
     int rd, imm;
-    char *token;
+    char *token = tokenize(instr," ,");
+    token = tokenize(NULL," ,");
 
     token = tokenize(instr, " ,");
     rd = get_r_index(token);
@@ -328,7 +363,8 @@ int JAL (char *instr) {
 
 int J (char *instr) {
     int imm;
-    char *token;
+    char *token = tokenize(instr," ,");
+    token = tokenize(NULL," ,");
 
     token = tokenize(instr, " ,");
     imm = get_r_index(token);
@@ -341,8 +377,6 @@ int J (char *instr) {
     pc = address;
     return 1; 
 }
-
-
 
   /*7)	Jump offset + Reg: MARY*/
 
@@ -400,7 +434,7 @@ int interpret(char *instr) {
   }
 
   if (pass == 1) {
-    return 1;
+    return pass;
   };
 
   return 0;
@@ -410,7 +444,7 @@ int main(int argc, char **argv) {
   FILE *file;
   char *buffer;
 
-  if (argc != 2) {
+  if (argc != 3) {
     fprintf(stderr, "Only two parameters must be passed.\n");
     return 1;
   }
@@ -439,5 +473,5 @@ int main(int argc, char **argv) {
   close_file();
   free(buffer);
 
-  return 0;
+  return print_registers(argv[2]);
 }
