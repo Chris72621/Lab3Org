@@ -13,7 +13,7 @@
 
 // IMPORTANT 
 uintptr_t r[N_REGISTERS];
-uintptr_t pc;
+int32_t pc;
 unsigned char mem[MEM_SIZE];
 
 // DOSENT SEEM IMPORTAJT
