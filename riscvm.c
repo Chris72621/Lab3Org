@@ -51,6 +51,26 @@ int is_digit(char character) {
     return character >= '0' && character <= '9';
 }
 
+// Custom function to parse immediate value string to integer because we can't use atoi()
+int parseImmediate(const char *immediate) {
+    int result = 0;
+    int sign = 1;
+
+    // Handle negative sign
+    if (*immediate == '-') {
+        sign = -1;
+        immediate++; // Move to next character
+    }
+  
+    // Parse digits
+    while (*immediate >= '0' && *immediate <= '9') {
+        result = result * 10 + (*immediate - '0');
+        immediate++;
+    }
+
+    return result * sign;
+}
+
 // COVERS ACTUAL REGISTER NAMES 
 int get_r_index_extended(const char *reg_name) {
     int result = 0;
@@ -246,7 +266,7 @@ int SW (char *instr){
     rs1 = get_r_index(token);
 
     token = tokenize(NULL, " ,");
-    imm = get_r_index(token);
+    imm = parseImmediate(token);
 
     if (rd == -1) {
         return 0;
@@ -357,24 +377,119 @@ int SUB (char *instr) {
 //RD <- RS1 ^ RS1
 int XOR (char *instr) {
     int rd, rs1, rs2;
+    char *token = tokenize(instr, " ,()");
+    token = tokenize(instr," ,");
+
+    token = tokenize(NULL, " ,");
+    rd = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+    rs1 = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+    rs2 = get_r_index(token);
+
+    if (rd == -1) {
+        return 0;
+    }
+
+    if (rs1 == -1 || rs2 == -1) {
+        return 0;
+    }
+
+    r[rd] = r[rs1] ^ r[rs2];
+
+    return 1;
 }
 
 //XORI RD,RS1,IMM -- Exclusive OR imm
 //XORI T0,T1,3
 //RD <- RS1 ^ IMM 
 int XORI (char *instr) {
+    int rd, rs1, imm;
+    char *token = tokenize(instr," ,");
+    token = tokenize(NULL," ,()");
+
+    token = tokenize(NULL," ,");
+    rd = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+    rs1 = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+    imm = parseImmediate(token);
+
+    if (rd == -1) {
+        return 0;
+    }
+
+    if (rs1 == -1 || imm == -1) {
+        return 0;
+    }
+
+    r[rd] = r[rs1] ^ imm;
+
+    return 1;
 }
 
 //SLLI RD,RS1,IMM -- Shift left imm
 //SLLI A3,A3,2
 //RD <- RS1 << imm[0:4]
 int SLLI (char *instr) {
+    int rd, rs1, imm;
+    char *token = tokenize(instr," ,");
+    token = tokenize(NULL," ,()");
+
+    token = tokenize(NULL," ,");
+    rd = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+    rs1 = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+     imm = parseImmediate(token) & 0x1F;  // Mask to extract lower 5 bits
+
+    if (rd == -1) {
+        return 0;
+    }
+
+    if (rs1 == -1 || imm == -1) {
+        return 0;
+    }
+
+    r[rd] = r[rs1] << imm;
+
+    return 1;
 }
 
 //SRLI RD,RS1,IMM -- Shift right imm
 //SRLI A0,A0,1
 //RD <- RS1 >> imm[0:4]
 int SRLI (char *instr) {
+    int rd, rs1, imm;
+    char *token = tokenize(instr," ,");
+    token = tokenize(NULL," ,()");
+
+    token = tokenize(NULL," ,");
+    rd = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+    rs1 = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+     imm = parseImmediate(token) & 0x1F;  // Mask to extract lower 5 bits
+
+    if (rd == -1) {
+        return 0;
+    }
+
+    if (rs1 == -1 || imm == -1) {
+        return 0;
+    }
+
+    r[rd] = r[rs1] >> imm;
+
+    return 1;
 }
 
 /*5)	Pseudo-instructions CHRIS*/
@@ -504,14 +619,51 @@ int J (char *instr) {
 
 /*7)	Jump offset + Reg: MARY*/
 //JALR RA,RA,240
+//JALR RD,RS1,IMM
 //RD <- PC+4 then PC = RS1 + IMM
 int JALR (char *instr) {
+    int rd, rs1, imm;
+    char *token = tokenize(instr," ,");
+    token = tokenize(NULL," ,()");
+
+    token = tokenize(NULL," ,");
+    rd = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+    rs1 = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+     imm = parseImmediate(token);
+
+    if (rs1 == -1 || rd == -1) {
+        return 0;
+    }
+  
+    r[rd] = pc + 4;
+    pc = r[rs1] + imm;
+
+    return 1;
 }
 
 //JR RS
 //JR RA
 //JALR X0, RS, 0
 int JR (char *instr) {
+    int rs;
+    char *token = tokenize(instr, " ,");
+    token = tokenize(NULL, " ,()");
+
+    token = tokenize(NULL, " ,");
+    rs = get_r_index(token);
+
+    if (rs == -1) {
+        return 0;
+    }
+
+    // Set the program counter to the address stored in the source register
+    pc = r[rs];
+
+    return 1;
 }
 
 /**
