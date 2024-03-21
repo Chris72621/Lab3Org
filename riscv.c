@@ -151,17 +151,12 @@ int get_r_index(const char *reg_name) {
 // LB X7,1000(X5)
 int LB (char *instr) {
     int rd, rs1, imm;
-    char *token = tokenize(instr," ,");
-    token = tokenize(NULL," ,");
+    char **tokens = tokenize(instr," ,");
 
-    token = tokenize(NULL," ,()");
-    rd = get_r_index(token);
 
-    token = tokenize(NULL," ,()");
-    imm = get_r_index(token);
-
-    token = tokenize(NULL," ,()");
-    rs1 = get_r_index(token);
+    rd = get_r_index(tokens[1]);
+    imm = get_r_index(tokens[2]);
+    rs1 = get_r_index(tokens[3]);
     
     if (rd == -1) {
         return 0;
@@ -171,8 +166,7 @@ int LB (char *instr) {
         return 0;
     }
     
-    int address = r[rs1] + imm;
-
+    uintptr_t address = (uintptr_t)r[rs1] + (uintptr_t)imm;
     if (address < 0 || address >= MEM_SIZE) {
         return 0;
     }
@@ -185,17 +179,11 @@ int LB (char *instr) {
 // LW RD,RS1,IMM  LW RA,28(SP)  RS <- M[RS1+IMM][0:31]
 int LW (char *instr) {
     int rd, rs1, imm;
-    char *token = tokenize(instr, " ,()");
-    token = tokenize(NULL," ,()"); // Ignores the LW
+    char **tokens = tokenize(instr, " ,()");
 
-    token = tokenize(NULL," ,()");
-    rd = get_r_index(token);
-
-    token = tokenize(NULL," ,()");
-    imm = get_r_index(token);
-
-    token = tokenize(NULL," ,()");
-    rs1 = get_r_index(token);
+    rd = get_r_index(tokens[0]);
+    imm = get_r_index(tokens[1]);
+    rs1 = get_r_index(tokens[2]);
 
     if (rd == -1) {
         return 0;
@@ -205,14 +193,14 @@ int LW (char *instr) {
         return 0;
     }
 
-    int address = r[rs1] + imm;
-
+    uintptr_t address = (uintptr_t)r[rs1] + (uintptr_t)imm;
     if (address < 0 || address >= MEM_SIZE) {
         return 0;
     }
 
-    char byte = mem[address];
+    uintptr_t byte = mem[address];
     r[rd] = byte;
+
     return 1;
 }
 
@@ -221,17 +209,11 @@ int LW (char *instr) {
 //M[RS1+IMM][0:15] <- RS2[0:7]
 int SB (char *instr){
     int rd, rs1, imm;
-    char *token = tokenize(instr, " ,()");
-    token = tokenize(NULL," ,");
+    char **tokens = tokenize(instr, " ,()");
     
-    token = tokenize(NULL," ,()");
-    rd = get_r_index(token);
-
-    token = tokenize(NULL," ,()");
-    imm = get_r_index(token);
-
-    token = tokenize(NULL," ,()");
-    rs1 = get_r_index(token);
+    rd = get_r_index(tokens[0]);
+    imm = get_r_index(tokens[1]);
+    rs1 = get_r_index(tokens[2]);
     
     if (rd == -1) {
         return 0;
@@ -241,7 +223,7 @@ int SB (char *instr){
         return 0;
     }
     
-    int address = r[rs1] + imm;
+    uintptr_t address = (uintptr_t)r[rs1] + (uintptr_t)imm;
     
     if (address < 0 || address >= MEM_SIZE) {
         return 0;
@@ -256,17 +238,11 @@ int SB (char *instr){
 //SW SP,RA,28
 int SW (char *instr){
     int rd, rs1, imm;
-    char *token = tokenize(instr, " ,()");
-    token = tokenize(NULL," ,");
+    char **tokens = tokenize(instr, " ,()");
 
-    token = tokenize(NULL, " ,");
-    rd = get_r_index(token);
-
-    token = tokenize(NULL, " ,");
-    rs1 = get_r_index(token);
-
-    token = tokenize(NULL, " ,");
-    imm = parseImmediate(token);
+    rd = get_r_index(tokens[1]);
+    rs1 = get_r_index(tokens[2]);
+    imm = parseImmediate(tokens[3]);
 
     if (rd == -1) {
         return 0;
@@ -276,30 +252,24 @@ int SW (char *instr){
         return 0;
     }
     
-    int address = r[rs1] + imm;
+    uintptr_t address = (uintptr_t)r[rs1] + (uintptr_t)imm;
     
     if (address < 0 || address >= MEM_SIZE) {
         return 0;
     }
     
-    mem[address] = r[rd];
+    mem[address] = (unsigned char)r[rd];
     return 1;
 }
 
 /*3)	Arithmetic SHARED */
 int ADD (char *instr) {
     int rd, rs1, rs2;
-    char *token = tokenize(instr, " ,()");
-    token = tokenize(instr," ,");
+    char **tokens = tokenize(instr, " ,()");
 
-    token = tokenize(NULL, " ,");
-    rd = get_r_index(token);
-
-    token = tokenize(NULL, " ,");
-    rs1 = get_r_index(token);
-
-    token = tokenize(NULL, " ,");
-    rs2 = get_r_index(token);
+    rd = get_r_index(tokens[0]);
+    rs1 = get_r_index(tokens[1]);
+    rs2 = get_r_index(tokens[2]);
 
     if (rd == -1) {
         return 0;
@@ -316,17 +286,11 @@ int ADD (char *instr) {
 
 int ADDI (char *instr) {
     int rd, rs1, imm;
-    char *token = tokenize(instr," ,");
-    token = tokenize(NULL," ,()");
+    char **tokens = tokenize(instr," ,");
 
-    token = tokenize(NULL," ,");
-    rd = get_r_index(token);
-
-    token = tokenize(NULL, " ,");
-    rs1 = get_r_index(token);
-
-    token = tokenize(NULL, " ,");
-    imm = get_r_index(token);
+    rd = get_r_index(tokens[1]);
+    rs1 = get_r_index(tokens[2]);
+    imm = get_r_index(tokens[3]);
 
     if (rd == -1) {
         return 0;
@@ -336,7 +300,7 @@ int ADDI (char *instr) {
         return 0;
     }
 
-    r[rd] = r[rs1] + imm;
+    r[rd] = r[rs1] + (uintptr_t)imm;
 
     return 1;
 }
@@ -346,17 +310,11 @@ int ADDI (char *instr) {
 //RD <- RS1 - RS2
 int SUB (char *instr) {
     int rd, rs1, rs2;
-    char *token = tokenize(instr, " ,()");
-    token = tokenize(instr," ,");
+    char **tokens = tokenize(instr, " ,()");
 
-    token = tokenize(NULL, " ,");
-    rd = get_r_index(token);
-
-    token = tokenize(NULL, " ,");
-    rs1 = get_r_index(token);
-
-    token = tokenize(NULL, " ,");
-    rs2 = get_r_index(token);
+    rd = get_r_index(tokens[0]);
+    rs1 = get_r_index(tokens[1]);
+    rs2 = get_r_index(tokens[2]);
 
     if (rd == -1) {
         return 0;
@@ -377,17 +335,11 @@ int SUB (char *instr) {
 //RD <- RS1 ^ RS1
 int XOR (char *instr) {
     int rd, rs1, rs2;
-    char *token = tokenize(instr, " ,()");
-    token = tokenize(instr," ,");
+    char **tokens = tokenize(instr, " ,()");
 
-    token = tokenize(NULL, " ,");
-    rd = get_r_index(token);
-
-    token = tokenize(NULL, " ,");
-    rs1 = get_r_index(token);
-
-    token = tokenize(NULL, " ,");
-    rs2 = get_r_index(token);
+    rd = get_r_index(tokens[0]);
+    rs1 = get_r_index(tokens[1]);
+    rs2 = get_r_index(tokens[2]);
 
     if (rd == -1) {
         return 0;
@@ -407,17 +359,11 @@ int XOR (char *instr) {
 //RD <- RS1 ^ IMM 
 int XORI (char *instr) {
     int rd, rs1, imm;
-    char *token = tokenize(instr," ,");
-    token = tokenize(NULL," ,()");
+    char **tokens = tokenize(instr," ,");
 
-    token = tokenize(NULL," ,");
-    rd = get_r_index(token);
-
-    token = tokenize(NULL, " ,");
-    rs1 = get_r_index(token);
-
-    token = tokenize(NULL, " ,");
-    imm = parseImmediate(token);
+    rd = get_r_index(tokens[0]);
+    rs1 = get_r_index(tokens[1]);
+    imm = parseImmediate(tokens[2]);
 
     if (rd == -1) {
         return 0;
@@ -427,7 +373,7 @@ int XORI (char *instr) {
         return 0;
     }
 
-    r[rd] = r[rs1] ^ imm;
+    r[rd] = (uintptr_t)(r[rs1] ^ (unsigned int)imm);
 
     return 1;
 }
@@ -437,17 +383,11 @@ int XORI (char *instr) {
 //RD <- RS1 << imm[0:4]
 int SLLI (char *instr) {
     int rd, rs1, imm;
-    char *token = tokenize(instr," ,");
-    token = tokenize(NULL," ,()");
+    char **tokens = tokenize(instr," ,");
 
-    token = tokenize(NULL," ,");
-    rd = get_r_index(token);
-
-    token = tokenize(NULL, " ,");
-    rs1 = get_r_index(token);
-
-    token = tokenize(NULL, " ,");
-     imm = parseImmediate(token) & 0x1F;  // Mask to extract lower 5 bits
+    rd = get_r_index(tokens[0]);
+    rs1 = get_r_index(tokens[1]);
+    imm = get_r_index(tokens[2]); // Mask to extract lower 5 bits
 
     if (rd == -1) {
         return 0;
@@ -467,17 +407,17 @@ int SLLI (char *instr) {
 //RD <- RS1 >> imm[0:4]
 int SRLI (char *instr) {
     int rd, rs1, imm;
-    char *token = tokenize(instr," ,");
-    token = tokenize(NULL," ,()");
+    char **tokens = tokenize(instr," ,");
 
-    token = tokenize(NULL," ,");
-    rd = get_r_index(token);
 
-    token = tokenize(NULL, " ,");
-    rs1 = get_r_index(token);
 
-    token = tokenize(NULL, " ,");
-     imm = parseImmediate(token) & 0x1F;  // Mask to extract lower 5 bits
+    rd = get_r_index(tokens[0]);
+
+
+    rs1 = get_r_index(tokens[1]);
+
+
+    imm = parseImmediate(tokens[2]);// Mask to extract lower 5 bits
 
     if (rd == -1) {
         return 0;
@@ -496,14 +436,10 @@ int SRLI (char *instr) {
 // MV RD,RS   MV A2,X0   ADDI RD,RS,IMM
 int MV (char *instr) {
     int rd, rs;
-    char *token = tokenize(instr," ,");
-    token = tokenize(NULL," ,");
+    char **tokens = tokenize(instr," ,");
 
-    token = tokenize(NULL," ,");
-    rd = get_r_index(token);
-
-    token = tokenize(NULL," ,");
-    rs = get_r_index(token);
+    rd = get_r_index(tokens[0]);
+    rs = get_r_index(tokens[1]);
 
     if (rd == -1 || rs == -1) {
         return 0;
@@ -517,34 +453,35 @@ int MV (char *instr) {
 // LI RD,IMM   LI A1,6   ADDI RD,X0,IMM
 int LI (char *instr) {
     int rd, imm;
-    char *token = tokenize(instr," ,");
-    token = tokenize(NULL," ,");
+    char **tokens = tokenize(instr, " ,");
 
-    token = tokenize(instr," ,");
-    rd = get_r_index(token);
+    if (tokens != NULL) {
+    printf("Tokens In LI MEhtod:\n");
+    for (int i = 0; tokens[i] != NULL; i++) {
+        printf("%s\n", tokens[i]);
+    }
+}
 
-    token = tokenize(NULL," ,");
-    imm = get_r_index(token);
+
+   
+    rd = get_r_index(tokens[1]);
+    imm = parseImmediate(tokens[2]);
 
     if (rd == -1 || imm == -1) {
         return 0;
     }
 
-    r[rd] = imm;
+    r[rd] = (uintptr_t)imm;
 
     return 1;
 }
 
 int NED (char *instr) {
     int rd, rs;
-    char *token = tokenize(instr," ,");
-    token = tokenize(NULL," ,");
+    char **tokens = tokenize(instr," ,");
 
-    token = tokenize(instr," ,");
-    rd = get_r_index(token);
-
-    token = tokenize(NULL," ,");
-    rs = get_r_index(token);
+    rd = get_r_index(tokens[0]);
+    rs = get_r_index(tokens[1]);
 
     if (rs == -1 || rd == -1) {
         return 0;
@@ -558,16 +495,10 @@ int NED (char *instr) {
 // NOT T0,T1
 int NOT(char *instr) { 
     int rd, rs;
-    char *token = tokenize(instr," ,");
-    token = tokenize(NULL," ,");
+    char **tokens = tokenize(instr," ,");
 
-    // Tokenize to extract destination register (RD)
-    token = tokenize(instr, " ,");
-    rd = get_r_index(token);
-
-    // Tokenize again to extract source register (RS)
-    token = tokenize(NULL, " ,");
-    rs = get_r_index(token);
+    rd = get_r_index(tokens[0]);
+    rs = get_r_index(tokens[1]);
 
     if (rd == -1 || rs == -1) {
         return 0;
@@ -580,21 +511,17 @@ int NOT(char *instr) {
   /*6)	Jump offset: CHRIS*/
 int JAL (char *instr) {
     int rd, imm;
-    char *token = tokenize(instr," ,");
-    token = tokenize(NULL," ,");
+    char **tokens = tokenize(instr," ,");
 
-    token = tokenize(instr, " ,");
-    rd = get_r_index(token);
-
-    token = tokenize(instr, " ,");
-    imm = get_r_index(token);
+    rd = get_r_index(tokens[0]);
+    imm = get_r_index(tokens[1]);
 
     if (rd == -1 || imm == -1) {
         return 0;
     }
 
     int address = pc + imm;
-    r[rd] = pc + 4;
+    r[rd] = (uintptr_t)((int32_t)pc + 4);
     pc = address;
 
     return 1; 
@@ -602,11 +529,9 @@ int JAL (char *instr) {
 
 int J (char *instr) {
     int imm;
-    char *token = tokenize(instr," ,");
-    token = tokenize(NULL," ,");
+    char **tokens = tokenize(instr," ,");
 
-    token = tokenize(instr, " ,");
-    imm = get_r_index(token);
+    imm = get_r_index(tokens[0]);
 
     if (imm == -1) {
         return 0;
@@ -623,24 +548,18 @@ int J (char *instr) {
 //RD <- PC+4 then PC = RS1 + IMM
 int JALR (char *instr) {
     int rd, rs1, imm;
-    char *token = tokenize(instr," ,");
-    token = tokenize(NULL," ,()");
+    char **tokens = tokenize(instr," ,");
 
-    token = tokenize(NULL," ,");
-    rd = get_r_index(token);
-
-    token = tokenize(NULL, " ,");
-    rs1 = get_r_index(token);
-
-    token = tokenize(NULL, " ,");
-     imm = parseImmediate(token);
+    rd = get_r_index(tokens[0]);
+    rs1 = get_r_index(tokens[1]);
+    imm = get_r_index(tokens[2]);
 
     if (rs1 == -1 || rd == -1) {
         return 0;
     }
   
-    r[rd] = pc + 4;
-    pc = r[rs1] + imm;
+    r[rd] = (uintptr_t)((int32_t)pc + 4);
+    pc = (int32_t)r[rs1] + imm;
 
     return 1;
 }
@@ -650,18 +569,16 @@ int JALR (char *instr) {
 //JALR X0, RS, 0
 int JR (char *instr) {
     int rs;
-    char *token = tokenize(instr, " ,");
-    token = tokenize(NULL, " ,()");
+    char **tokens = tokenize(instr, " ,");
 
-    token = tokenize(NULL, " ,");
-    rs = get_r_index(token);
+    rs = get_r_index(tokens[0]);
 
     if (rs == -1) {
         return 0;
     }
 
     // Set the program counter to the address stored in the source register
-    pc = r[rs];
+    pc = (int32_t)r[rs];
 
     return 1;
 }
@@ -672,9 +589,11 @@ int JR (char *instr) {
  * instruction string will be passed as a parameter to this function.
  */ 
 int interpret(char *instr) {
-  char *instruction = instr;
-  int pass = 0; // TO CHECK IN INSTRUCTION WORKED AT THE END
-
+  char *fullInstr = instr;
+  char **tokens = tokenize(instr, " ");
+  char *instruction = tokens[0]; 
+   
+  int pass = 0; 
   if (str_cmp(instruction, "LB") == 0) {
       pass = LB(instr);
   } else if (str_cmp(instruction, "LW") == 0) {
@@ -717,6 +636,11 @@ int interpret(char *instr) {
       printf("Invalid instruction\n");
       return 0;
   }
+  
+  for (int i = 0; tokens[i] != NULL; i++) {
+    free(tokens[i]);
+  }
+    free(tokens);
 
   if (pass == 1) {
     return pass;
@@ -754,7 +678,10 @@ int main(int argc, char **argv) {
 
     for (size_t i = 0; i < LINE_SIZE; i++) {
         get_line(buffer, i);
-        interpret(buffer);
+        if (interpret(buffer)) {
+            continue;
+        }
+        
     }
   /* --- Your code ends here. --- */
   close_file();
