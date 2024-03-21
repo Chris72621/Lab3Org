@@ -7,13 +7,14 @@
 #include "my_string.h"
 #include "process_file.h"
 #include "tokenizer.h"
+#include "riscv.h"
 
 #define N_REGISTERS ((size_t)32)
 #define MEM_SIZE ((size_t)1024)
 
 // IMPORTANT 
 uintptr_t r[N_REGISTERS];
-uintptr_t pc;
+int32_t pc;
 unsigned char mem[MEM_SIZE];
 
 // DOSENT SEEM IMPORTAJT
@@ -49,6 +50,26 @@ void init_memory_elements(void) {
 
 int is_digit(char character) {
     return character >= '0' && character <= '9';
+}
+
+// Custom function to parse immediate value string to integer because we can't use atoi()
+int parseImmediate(const char *immediate) {
+    int result = 0;
+    int sign = 1;
+
+    // Handle negative sign
+    if (*immediate == '-') {
+        sign = -1;
+        immediate++; // Move to next character
+    }
+  
+    // Parse digits
+    while (*immediate >= '0' && *immediate <= '9') {
+        result = result * 10 + (*immediate - '0');
+        immediate++;
+    }
+
+    return result * sign;
 }
 
 // COVERS ACTUAL REGISTER NAMES 
@@ -161,6 +182,7 @@ int LB (char *instr) {
     r[rd] = byte; // RS <- byte
     return 1;
 }
+
 // LW RD,RS1,IMM  LW RA,28(SP)  RS <- M[RS1+IMM][0:31]
 int LW (char *instr) {
     int rd, rs1, imm;
@@ -195,8 +217,77 @@ int LW (char *instr) {
     return 1;
 }
 
-  /*2)	Stores MARY */
-  /*3)	Arithmetic SHARED */
+/*2)	Stores MARY */
+//SB A0,0(SP)
+//M[RS1+IMM][0:15] <- RS2[0:7]
+int SB (char *instr){
+    int rd, rs1, imm;
+    char *token = tokenize(instr, " ,()");
+    token = tokenize(NULL," ,");
+    
+    token = tokenize(NULL," ,()");
+    rd = get_r_index(token);
+
+    token = tokenize(NULL," ,()");
+    imm = get_r_index(token);
+
+    token = tokenize(NULL," ,()");
+    rs1 = get_r_index(token);
+    
+    if (rd == -1) {
+        return 0;
+    }
+
+    if (rs1 == -1 || imm == -1) {
+        return 0;
+    }
+    
+    int address = r[rs1] + imm;
+    
+    if (address < 0 || address >= MEM_SIZE) {
+        return 0;
+    }
+    
+    mem[address] = r[rd] & 0xFF; // Store only the lower 8 bits
+    return 1;
+}
+
+//M[RS1+IMM][0:31] <- RS2[0:31] 
+//SW RD,RS1,IMM
+//SW SP,RA,28
+int SW (char *instr){
+    int rd, rs1, imm;
+    char *token = tokenize(instr, " ,()");
+    token = tokenize(NULL," ,");
+
+    token = tokenize(NULL, " ,");
+    rd = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+    rs1 = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+    imm = parseImmediate(token);
+
+    if (rd == -1) {
+        return 0;
+    }
+
+    if (rs1 == -1 || imm == -1) {
+        return 0;
+    }
+    
+    int address = r[rs1] + imm;
+    
+    if (address < 0 || address >= MEM_SIZE) {
+        return 0;
+    }
+    
+    mem[address] = r[rd];
+    return 1;
+}
+
+/*3)	Arithmetic SHARED */
 int ADD (char *instr) {
     int rd, rs1, rs2;
     char *token = tokenize(instr, " ,()");
@@ -251,10 +342,159 @@ int ADDI (char *instr) {
     return 1;
 }
 
-  /*4)	Bitwise operators MARY*/
+//SUB RD,RS1,RS2
+//SUB A3,A3,A2
+//RD <- RS1 - RS2
+int SUB (char *instr) {
+    int rd, rs1, rs2;
+    char *token = tokenize(instr, " ,()");
+    token = tokenize(instr," ,");
 
-  /*5)	Pseudo-instructions CHRIS*/
-  // MV RD,RS   MV A2,X0   ADDI RD,RS,IMM
+    token = tokenize(NULL, " ,");
+    rd = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+    rs1 = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+    rs2 = get_r_index(token);
+
+    if (rd == -1) {
+        return 0;
+    }
+
+    if (rs1 == -1 || rs2 == -1) {
+        return 0;
+    }
+
+    r[rd] = r[rs1] - r[rs2];
+
+    return 1;
+}
+
+/*4)	Bitwise operators MARY*/
+//XOR RD,RS1,RS2 -- Exclusive OR
+//XOR A4,A4,A5
+//RD <- RS1 ^ RS1
+int XOR (char *instr) {
+    int rd, rs1, rs2;
+    char *token = tokenize(instr, " ,()");
+    token = tokenize(instr," ,");
+
+    token = tokenize(NULL, " ,");
+    rd = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+    rs1 = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+    rs2 = get_r_index(token);
+
+    if (rd == -1) {
+        return 0;
+    }
+
+    if (rs1 == -1 || rs2 == -1) {
+        return 0;
+    }
+
+    r[rd] = r[rs1] ^ r[rs2];
+
+    return 1;
+}
+
+//XORI RD,RS1,IMM -- Exclusive OR imm
+//XORI T0,T1,3
+//RD <- RS1 ^ IMM 
+int XORI (char *instr) {
+    int rd, rs1, imm;
+    char *token = tokenize(instr," ,");
+    token = tokenize(NULL," ,()");
+
+    token = tokenize(NULL," ,");
+    rd = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+    rs1 = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+    imm = parseImmediate(token);
+
+    if (rd == -1) {
+        return 0;
+    }
+
+    if (rs1 == -1 || imm == -1) {
+        return 0;
+    }
+
+    r[rd] = r[rs1] ^ imm;
+
+    return 1;
+}
+
+//SLLI RD,RS1,IMM -- Shift left imm
+//SLLI A3,A3,2
+//RD <- RS1 << imm[0:4]
+int SLLI (char *instr) {
+    int rd, rs1, imm;
+    char *token = tokenize(instr," ,");
+    token = tokenize(NULL," ,()");
+
+    token = tokenize(NULL," ,");
+    rd = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+    rs1 = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+     imm = parseImmediate(token) & 0x1F;  // Mask to extract lower 5 bits
+
+    if (rd == -1) {
+        return 0;
+    }
+
+    if (rs1 == -1 || imm == -1) {
+        return 0;
+    }
+
+    r[rd] = r[rs1] << imm;
+
+    return 1;
+}
+
+//SRLI RD,RS1,IMM -- Shift right imm
+//SRLI A0,A0,1
+//RD <- RS1 >> imm[0:4]
+int SRLI (char *instr) {
+    int rd, rs1, imm;
+    char *token = tokenize(instr," ,");
+    token = tokenize(NULL," ,()");
+
+    token = tokenize(NULL," ,");
+    rd = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+    rs1 = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+     imm = parseImmediate(token) & 0x1F;  // Mask to extract lower 5 bits
+
+    if (rd == -1) {
+        return 0;
+    }
+
+    if (rs1 == -1 || imm == -1) {
+        return 0;
+    }
+
+    r[rd] = r[rs1] >> imm;
+
+    return 1;
+}
+
+/*5)	Pseudo-instructions CHRIS*/
+// MV RD,RS   MV A2,X0   ADDI RD,RS,IMM
 int MV (char *instr) {
     int rd, rs;
     char *token = tokenize(instr," ,");
@@ -378,8 +618,54 @@ int J (char *instr) {
     return 1; 
 }
 
-  /*7)	Jump offset + Reg: MARY*/
+/*7)	Jump offset + Reg: MARY*/
+//JALR RA,RA,240
+//JALR RD,RS1,IMM
+//RD <- PC+4 then PC = RS1 + IMM
+int JALR (char *instr) {
+    int rd, rs1, imm;
+    char *token = tokenize(instr," ,");
+    token = tokenize(NULL," ,()");
 
+    token = tokenize(NULL," ,");
+    rd = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+    rs1 = get_r_index(token);
+
+    token = tokenize(NULL, " ,");
+     imm = parseImmediate(token);
+
+    if (rs1 == -1 || rd == -1) {
+        return 0;
+    }
+  
+    r[rd] = pc + 4;
+    pc = r[rs1] + imm;
+
+    return 1;
+}
+
+//JR RS
+//JR RA
+//JALR X0, RS, 0
+int JR (char *instr) {
+    int rs;
+    char *token = tokenize(instr, " ,");
+    token = tokenize(NULL, " ,()");
+
+    token = tokenize(NULL, " ,");
+    rs = get_r_index(token);
+
+    if (rs == -1) {
+        return 0;
+    }
+
+    // Set the program counter to the address stored in the source register
+    pc = r[rs];
+
+    return 1;
+}
 
 /**
  * Fill out this function and use it to read interpret user input to execute
@@ -469,7 +755,6 @@ int main(int argc, char **argv) {
   // NOTE: Use get_line() function in process_file.h
 
   /* --- Your code ends here. --- */
-
   close_file();
   free(buffer);
 
