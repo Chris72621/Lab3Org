@@ -32,7 +32,6 @@ static int print_registers (char *fd_name) {
     return 0;
 }
 
-// JUST BACKGROUND STUFF BUT NEED TO UNDERSTAND
 void init_memory_elements(void) {
   // Initialize registers
   for (size_t i = 0; i < N_REGISTERS; i++) r[i] = ((uintptr_t)0);
@@ -681,39 +680,39 @@ int interpret(char *instr) {
   } else if (str_cmp(instruction, "LW") == 0) {
       pass = LW(instr);
   } else if (str_cmp(instruction, "SB") == 0) {
-      // Process SB instruction 
+      pass = SB(instr);
   } else if (str_cmp(instruction, "SW") == 0) {
-      // Process SW instruction 
+      pass = SW(instr);
   } else if (str_cmp(instruction, "ADD") == 0) {
-      // Process ADD instruction 
+      pass = ADD(instr);
   } else if (str_cmp(instruction, "ADDI") == 0) {
-      // Process ADDI instruction 
+      pass = ADDI(instr);
   } else if (str_cmp(instruction, "SUB") == 0) {
-      // Process SUB instruction 
+      pass = SUB(instr);
   } else if (str_cmp(instruction, "XOR") == 0) {
-      // Process  instruction 
+      pass = XOR(instr);
   } else if (str_cmp(instruction, "XORI") == 0) {
-      // Process  instruction 
+      pass = XORI(instr);
   } else if (str_cmp(instruction, "SLLI") == 0) {
-      // Process  instruction  
+      pass = SLLI(instr);
   } else if (str_cmp(instruction, "SRLI") == 0) {
-      // Process  instruction 
+      pass = SRLI(instr);
   } else if (str_cmp(instruction, "MV") == 0) {
-      // Process  instruction 
+      pass = MV(instr);
   } else if (str_cmp(instruction, "LI") == 0) {
-      // Process  instruction 
+      pass = LI(instr);
   } else if (str_cmp(instruction, "NED") == 0) {
-      // Process  instruction 
+      pass = NED(instr);
   } else if (str_cmp(instruction, "NOT") == 0) {
-      // Process  instruction 
+      pass = NOT(instr);
   } else if (str_cmp(instruction, "JAL") == 0) {
-      // Process  instruction 
+      pass = JAL(instr);
   } else if (str_cmp(instruction, "J") == 0) {
-      // Process  instruction 
+      pass = J(instr);
   } else if (str_cmp(instruction, "JALR") == 0) {
-      // Process  instruction 
+      pass = JALR(instr);
   } else if (str_cmp(instruction, "JR") == 0) {
-      // Process  instruction 
+      pass = JR(instr);
   } else {
       printf("Invalid instruction\n");
       return 0;
@@ -748,12 +747,15 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-
   /* --- Your code starts here. --- */
 
   // For each line in the file, interpret it.
   // NOTE: Use get_line() function in process_file.h
 
+    for (size_t i = 0; i < LINE_SIZE; i++) {
+        get_line(buffer, i);
+        interpret(buffer);
+    }
   /* --- Your code ends here. --- */
   close_file();
   free(buffer);
