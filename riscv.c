@@ -131,13 +131,11 @@ int get_r_index(char *reg_name) {
     else if (str_cmp(reg_name, "T5") == 0)  return 30; 
     else if (str_cmp(reg_name, "T6") == 0)  return 31; 
     else { return get_r_index_extended(reg_name); }
-    else { return get_r_index_extended(reg_name); }
     return -1;
 } 
 
 /*1) Loads CHRIS*/
 // LB X7,1000(X5)
-int LB (char **tokens) {
 int LB (char **tokens) {
     int rd, rs1, imm;
 
@@ -219,7 +217,6 @@ int SB (char **tokens){
     }
     
     uintptr_t address = (uintptr_t)r[rs1] + (uintptr_t)imm;
-    uintptr_t address = (uintptr_t)r[rs1] + (uintptr_t)imm;
     
     if (address < 0 || address >= MEM_SIZE) {
         return 0;
@@ -232,7 +229,6 @@ int SB (char **tokens){
 //M[RS1+IMM][0:31] <- RS2[0:31] 
 //SW RD,RS1,IMM
 //SW SP,RA,28
-int SW (char **tokens){
 int SW (char **tokens){
     int rd, rs1, imm;
 
@@ -251,7 +247,6 @@ int SW (char **tokens){
         return 0;
     }
     
-    uintptr_t address = (uintptr_t)r[rs1] + (uintptr_t)imm;
     uintptr_t address = (uintptr_t)r[rs1] + (uintptr_t)imm;
     
     if (address < 0 || address >= MEM_SIZE) {
@@ -291,7 +286,7 @@ int ADD (char **tokens) {
     return 1;
 }
 
-int ADDI (char **tokens) {
+
 int ADDI (char **tokens) {
     int rd, rs1, imm;
 
@@ -348,7 +343,6 @@ int SUB (char **tokens) {
 //XOR A4,A4,A5
 //RD <- RS1 ^ RS1
 int XOR (char **tokens) {
-int XOR (char **tokens) {
     int rd, rs1, rs2;
 
     rd = get_r_index(tokens[0]);
@@ -376,7 +370,6 @@ int XOR (char **tokens) {
 //XORI RD,RS1,IMM -- Exclusive OR imm
 //XORI T0,T1,3
 //RD <- RS1 ^ IMM 
-int XORI (char **tokens) {
 int XORI (char **tokens) {
     int rd, rs1, imm;
 
@@ -407,7 +400,6 @@ int XORI (char **tokens) {
 //SLLI A3,A3,2
 //RD <- RS1 << imm[0:4]
 int SLLI (char **tokens) {
-int SLLI (char **tokens) {
     int rd, rs1, imm;
 
     rd = get_r_index(tokens[0]);
@@ -437,7 +429,6 @@ int SLLI (char **tokens) {
 //SRLI A0,A0,1
 //RD <- RS1 >> imm[0:4]
 int SRLI (char **tokens) {
-int SRLI (char **tokens) {
     int rd, rs1, imm;
 
     rd = get_r_index(tokens[0]);
@@ -465,7 +456,6 @@ int SRLI (char **tokens) {
 /*5)	Pseudo-instructions CHRIS*/
 // MV RD,RS   MV A2,X0   ADDI RD,RS,IMM
 int MV (char **tokens) {
-int MV (char **tokens) {
     int rd, rs;
 
     rd = get_r_index(tokens[1]);
@@ -487,7 +477,6 @@ int MV (char **tokens) {
 }
 
 // LI RD,IMM   LI A1,6   ADDI RD,X0,IMM
-int LI (char **tokens) {
 int LI (char **tokens) {
     int rd, imm;
 
@@ -540,7 +529,6 @@ int NOT(char **tokens) {
 }
   /*6)	Jump offset: CHRIS*/
 int JAL (char **tokens) {
-int JAL (char **tokens) {
     int rd, imm;
 
     rd = get_r_index(tokens[0]);
@@ -564,7 +552,6 @@ int JAL (char **tokens) {
     return 1; 
 }
 
-int J (char **tokens) {
 int J (char **tokens) {
     int imm;
 
@@ -644,60 +631,11 @@ int JR (char **tokens) {
  * instruction string will be passed as a parameter to this function.
  */ 
 int interpret(char *instr) {
-    char **tokens = tokenize(instr, " ,()");
-    char *instruction = tokens[0]; 
-    printf("INSTRUCTION ENTERED: %s\n", instr);
-
     int pass = 0; 
     char **tokens = tokenize(instr, " ,()");
     char *instruction = tokens[0]; 
     printf("INSTRUCTION ENTERED: %s\n", instr);
 
-    int pass = 0; 
-
-    if (str_cmp(instruction, "LB") == 0) {
-        pass = LB(tokens);
-    } else if (str_cmp(instruction, "LW") == 0) {
-        pass = LW(tokens);
-    } else if (str_cmp(instruction, "SB") == 0) {
-        pass = SB(tokens);
-    } else if (str_cmp(instruction, "SW") == 0) {
-        pass = SW(tokens);
-    } else if (str_cmp(instruction, "ADD") == 0) {
-        pass = ADD(tokens);
-    } else if (str_cmp(instruction, "ADDI") == 0) {
-        pass = ADDI(tokens);
-    } else if (str_cmp(instruction, "SUB") == 0) {
-        pass = SUB(tokens);
-    } else if (str_cmp(instruction, "XOR") == 0) {
-        pass = XOR(tokens);
-    } else if (str_cmp(instruction, "XORI") == 0) {
-        pass = XORI(tokens);
-    } else if (str_cmp(instruction, "SLLI") == 0) {
-        pass = SLLI(tokens);
-    } else if (str_cmp(instruction, "SRLI") == 0) {
-        pass = SRLI(tokens);
-    } else if (str_cmp(instruction, "MV") == 0) {
-        pass = MV(tokens);
-    } else if (str_cmp(instruction, "LI") == 0) {
-        pass = LI(tokens);
-    } else if (str_cmp(instruction, "NED") == 0) {
-        pass = NED(tokens);
-    } else if (str_cmp(instruction, "NOT") == 0) {
-        pass = NOT(tokens);
-    } else if (str_cmp(instruction, "JAL") == 0) {
-        pass = JAL(tokens);
-    } else if (str_cmp(instruction, "J") == 0) {
-        pass = J(tokens);
-    } else if (str_cmp(instruction, "JALR") == 0) {
-        pass = JALR(tokens);
-    } else if (str_cmp(instruction, "JR") == 0) {
-        pass = JR(tokens);
-    } else {
-        printf("Invalid instruction: %s\n", instruction);
-        printf("Invalid, likely cause buffer is getting empty strings from files\n");
-        return pass;
-    }
     if (str_cmp(instruction, "LB") == 0) {
         pass = LB(tokens);
     } else if (str_cmp(instruction, "LW") == 0) {
@@ -746,12 +684,7 @@ int interpret(char *instr) {
         printf("VALID instruction\n");
         return pass;
     }
-    if (pass == 1) {
-        printf("VALID instruction\n");
-        return pass;
-    }
 
-    return 0;
     return 0;
 }
 
