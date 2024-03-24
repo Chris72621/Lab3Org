@@ -530,19 +530,34 @@ int J (char **tokens) {
     imm = parseImmediate(tokens[1]);
 
     if (imm == -1) {
-        return 0;
+      return 0;
+    }
+    
+    if(imm < 0){
+      imm = imm * 1;
     }
 
-     // Convert the unsigned program counter (pc) to a signed integer
-    int32_t signed_pc = (int32_t)pc;
+    // Print initial program counter value
+    printf("Initial pc value: %u \n", pc);
+
+    // Print parsed immediate value
+    printf("Parsed immediate value: %d \n", imm);
+
+    // Adjust the program counter by adding or subtracting the parsed immediate value
     
-    signed_pc += imm;
-    
-    if (signed_pc < 0 || signed_pc >= MEM_SIZE) {
+    if(imm < 0){
+      pc -= imm;
+    }else if(imm > 0){
+      pc += imm;
+    }
+
+    // Print updated program counter value
+    printf("Updated pc value: %u \n", pc);
+
+    // Check if the new program counter is within the memory bounds
+    if (pc < 0 || pc >= MEM_SIZE) {
         return 0; // Invalid memory address
     }
-    
-    pc = (uint32_t)signed_pc;
     
     printf("pc value: %u \n", pc);
     
