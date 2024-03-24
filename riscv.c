@@ -622,8 +622,6 @@ int main(int argc, char **argv) {
         printf("BUFFER:  %s", buffer);
         if (buffer != NULL || buffer != '\0') {
             interpret(buffer); 
-        } else {
-            printf("wtf");
         }
         printf("\n");
          
