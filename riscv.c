@@ -21,9 +21,9 @@ static int print_registers (char *fd_name) {
     FILE *fptr;
     if ((fptr = fopen(fd_name, "w")) == NULL) return 1;
     // Print all registers
-    fprintf(fptr, "Registers:");
+    fprintf(fptr, "Registers: \n");
     for (size_t i = 0; i < N_REGISTERS; i++)
-        fprintf (fptr, "XE%zu] = %uln",i, r[i]);
+        fprintf(fptr, "X[%zu] = %u \n", i, r[i]);
     return 0;
 }
 
