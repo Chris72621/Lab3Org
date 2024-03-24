@@ -620,12 +620,12 @@ int main(int argc, char **argv) {
     for (size_t i = 0; i < LINE_SIZE; i++) {
         get_line(buffer, i);
         printf("BUFFER:  %s", buffer);
-        if (buffer != NULL || buffer != '\0') {
+        if (buffer != NULL && *buffer != '\0') {
             interpret(buffer); 
         }
         printf("\n");
-         
     }
+
   /* --- Your code ends here. --- */
   close_file();
   free(buffer);
