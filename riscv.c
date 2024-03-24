@@ -473,7 +473,7 @@ int LI (char **tokens) {
     return 1;
 }
 
-int NED (char **tokens) {
+int NEG (char **tokens) {
     int rd, rs;
 
     rd = get_r_index(tokens[0]);
@@ -646,8 +646,8 @@ int interpret(char *instr) {
         pass = MV(tokens);
     } else if (str_cmp(instruction, "LI") == 0) {
         pass = LI(tokens);
-    } else if (str_cmp(instruction, "NED") == 0) {
-        pass = NED(tokens);
+    } else if (str_cmp(instruction, "NEG") == 0) {
+        pass = NEG(tokens);
     } else if (str_cmp(instruction, "NOT") == 0) {
         pass = NOT(tokens);
     } else if (str_cmp(instruction, "JAL") == 0) {
