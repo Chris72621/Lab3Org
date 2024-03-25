@@ -39,7 +39,7 @@ void init_memory_elements(void) {
 
   // Set sp to be the top part of the memory 
   // THIS IS IMPORTANT I THINK THE OTHER REGISTERS ARE BASICALLY OPEN BUT THE SP
-  r[2] = (uintptr_t)&mem[MEM_SIZE];
+  r[2] = MEM_SIZE;
 }
 
 int is_digit(char character) {
@@ -152,14 +152,14 @@ int LB (char **tokens) {
         return 0;
     }
         
-    uintptr_t address = (uintptr_t)r[rs1] + (uintptr_t)imm;
+    uintptr_t address = r[rs1] + imm;
     
     //if (address < 0 || address >= MEM_SIZE) {
         //return 0;
     //}
     
     //unsigned char byte = mem[address]; // M[RS1+IMM][0:7]
-    r[rd] = mem[address]; // RS <- byte
+    r[rd] = (int32_t)(int8_t)mem[address]; // RS <- byte
     
     printf("value in rd: %u \n", r[rd]);
     return 1;
@@ -186,7 +186,7 @@ int LW (char **tokens) {
         return 0;
     }
 
-    uintptr_t byte = mem[address];
+    uintptr_t byte = &mem[address];
     r[rd] = byte;
     
     printf("register: %u \n", rd);
@@ -240,13 +240,13 @@ int SW (char **tokens){
         return 0;
     }
     
-    uintptr_t address = (uintptr_t)r[rs1] + (uintptr_t)imm;
+    uint32_t address = r[rs1] + imm;
     
     if (address < 0 || address >= MEM_SIZE) {
         return 0;
     }
     
-    mem[address] = (unsigned char)r[rd];
+    *(u_int32_t*)&mem[address] = (unsigned char)r[rd];
     
     printf("register: %u \n", rd);
     printf("value in rd: %u \n", r[rd]);
@@ -290,14 +290,9 @@ int ADDI (char **tokens) {
     if (rs1 == -1 || imm == -1) {
         return 0;
     }
-
-    if(imm < 0){
-      //imm = -1 * imm;
-      r[rd] -= r[rs1] - (-imm);
-    }else{
-      r[rd] = r[rs1] + imm;
-    }
-
+ 
+    r[rd] = r[rs1] + imm;
+   
     printf("register: %d \n", rd);
     printf("value in rd: %d \n", r[rd]);
     return 1;
@@ -363,7 +358,9 @@ int XORI (char **tokens) {
 
     rd = get_r_index(tokens[0]);
     rs1 = get_r_index(tokens[1]);
+
     imm = parseImmediate(tokens[2]);
+
 
     if (rd == -1) {
         return 0;
@@ -391,6 +388,7 @@ int SLLI (char **tokens) {
     rs1 = get_r_index(tokens[1]);
     imm = get_r_index(tokens[2]); // Mask to extract lower 5 bits
 
+
     if (rd == -1) {
         return 0;
     }
@@ -416,6 +414,7 @@ int SRLI (char **tokens) {
     rd = get_r_index(tokens[0]);
     rs1 = get_r_index(tokens[1]);
     imm = parseImmediate(tokens[2]);// Mask to extract lower 5 bits
+
 
     if (rd == -1) {
         return 0;
@@ -461,7 +460,9 @@ int LI (char **tokens) {
     int rd, imm;
 
     rd = get_r_index(tokens[1]);
+
     imm = parseImmediate(tokens[2]);
+
 
     if (rd == 17 || rd == 1 || rd == -1 || imm == -1) {
         return 0;
@@ -512,7 +513,9 @@ int JAL (char **tokens) {
     int rd, imm;
 
     rd = get_r_index(tokens[0]);
+
     imm = get_r_index(tokens[1]);
+
 
     if (rd == -1 || imm == -1) {
         return 0;
@@ -531,28 +534,20 @@ int JAL (char **tokens) {
 
 int J(char **tokens) {
     int imm;
-
     imm = parseImmediate(tokens[1]);
-
-    if (imm == -1) {
-        return 0;
-    }
-
-    // Print initial program counter value
-    printf("Initial pc value: %u \n", pc);
-
-    // Print parsed immediate value
     printf("Parsed immediate value: %d \n", imm);
+    // Print initial program counter value
+    printf("Initial pc value: %d \n", pc);
 
-    // Calculate the new program counter value
+    pc += imm;
+
+    // if(imm < 0){
+    //   pc -= imm;
+    // }else if(imm > 0){
+    //   pc += imm;
+    // }
     
-    if(imm < 0){
-      pc -= imm;
-    }else if(imm > 0){
-      pc += imm;
-    }
-    
-    printf("pc value: %u \n", pc);
+    printf("Final PC value HERE: %d \n", pc);
     return 1;
 }
 
@@ -692,8 +687,8 @@ int main(int argc, char **argv) {
   // For each line in the file, interpret it.
   // NOTE: Use get_line() function in process_file.h
 
-  for (size_t i = 0; i < LINE_SIZE; i++) {
-    get_line(buffer, i);
+  while (pc != -1) {
+    get_line(buffer, pc / 4);
     printf("BUFFER: %s \n", buffer);
     if (*buffer != '\0') {
       interpret(buffer); 
@@ -701,6 +696,9 @@ int main(int argc, char **argv) {
       break;
     }
     printf("\n");
+    r[0] = 0;
+    pc += 4;
+    printf("IN WHILE LOOP PC: %d \n", pc);
   }
 
   /* --- Your code ends here. --- */
