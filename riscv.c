@@ -68,7 +68,7 @@ int parseImmediate(const char *immediate) {
 
     printf("Final result before sign adjustment: %d\n", result);
     printf("Final result after sign adjustment: %d\n", result * sign);
-    return result * sign;
+    return (result * sign);
 }
 
 // COVERS ACTUAL REGISTER NAMES EX. X1
@@ -291,10 +291,15 @@ int ADDI (char **tokens) {
         return 0;
     }
 
-    r[rd] = r[rs1] + imm;
-    
-    printf("register: %u \n", rd);
-    printf("value in rd: %u \n", r[rd]);
+    if(imm < 0){
+      //imm = -1 * imm;
+      r[rd] -= r[rs1] - (-imm);
+    }else{
+      r[rd] = r[rs1] + imm;
+    }
+
+    printf("register: %d \n", rd);
+    printf("value in rd: %d \n", r[rd]);
     return 1;
 }
 
@@ -473,7 +478,7 @@ int LI (char **tokens) {
     return 1;
 }
 
-int NEG (char **tokens) {
+int NED (char **tokens) {
     int rd, rs;
 
     rd = get_r_index(tokens[0]);
@@ -524,17 +529,13 @@ int JAL (char **tokens) {
     return 1; 
 }
 
-int J (char **tokens) {
+int J(char **tokens) {
     int imm;
 
     imm = parseImmediate(tokens[1]);
 
     if (imm == -1) {
-      return 0;
-    }
-    
-    if(imm < 0){
-      imm = imm * 1;
+        return 0;
     }
 
     // Print initial program counter value
@@ -543,25 +544,16 @@ int J (char **tokens) {
     // Print parsed immediate value
     printf("Parsed immediate value: %d \n", imm);
 
-    // Adjust the program counter by adding or subtracting the parsed immediate value
+    // Calculate the new program counter value
     
     if(imm < 0){
       pc -= imm;
     }else if(imm > 0){
       pc += imm;
     }
-
-    // Print updated program counter value
-    printf("Updated pc value: %u \n", pc);
-
-    // Check if the new program counter is within the memory bounds
-    if (pc < 0 || pc >= MEM_SIZE) {
-        return 0; // Invalid memory address
-    }
     
     printf("pc value: %u \n", pc);
-    
-    return 1; 
+    return 1;
 }
 
 /*7)	Jump offset + Reg: MARY*/
@@ -646,8 +638,8 @@ int interpret(char *instr) {
         pass = MV(tokens);
     } else if (str_cmp(instruction, "LI") == 0) {
         pass = LI(tokens);
-    } else if (str_cmp(instruction, "NEG") == 0) {
-        pass = NEG(tokens);
+    } else if (str_cmp(instruction, "NED") == 0) {
+        pass = NED(tokens);
     } else if (str_cmp(instruction, "NOT") == 0) {
         pass = NOT(tokens);
     } else if (str_cmp(instruction, "JAL") == 0) {
